@@ -1,12 +1,5 @@
 package com.sdl.hellosdlandroid;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -35,6 +28,7 @@ import com.smartdevicelink.proxy.rpc.EndAudioPassThruResponse;
 import com.smartdevicelink.proxy.rpc.GenericResponse;
 import com.smartdevicelink.proxy.rpc.GetDTCsResponse;
 import com.smartdevicelink.proxy.rpc.GetVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.GetWayPointsResponse;
 import com.smartdevicelink.proxy.rpc.ListFiles;
 import com.smartdevicelink.proxy.rpc.ListFilesResponse;
 import com.smartdevicelink.proxy.rpc.MenuParams;
@@ -54,6 +48,7 @@ import com.smartdevicelink.proxy.rpc.OnSystemRequest;
 import com.smartdevicelink.proxy.rpc.OnTBTClientState;
 import com.smartdevicelink.proxy.rpc.OnTouchEvent;
 import com.smartdevicelink.proxy.rpc.OnVehicleData;
+import com.smartdevicelink.proxy.rpc.OnWayPointChange;
 import com.smartdevicelink.proxy.rpc.PerformAudioPassThruResponse;
 import com.smartdevicelink.proxy.rpc.PerformInteractionResponse;
 import com.smartdevicelink.proxy.rpc.PutFile;
@@ -73,9 +68,11 @@ import com.smartdevicelink.proxy.rpc.SpeakResponse;
 import com.smartdevicelink.proxy.rpc.StreamRPCResponse;
 import com.smartdevicelink.proxy.rpc.SubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.SubscribeVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.SubscribeWayPointsResponse;
 import com.smartdevicelink.proxy.rpc.SystemRequestResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.UnsubscribeWayPointsResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
@@ -85,6 +82,13 @@ import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
 import com.smartdevicelink.transport.MultiplexTransportConfig;
 import com.smartdevicelink.transport.TransportConstants;
 import com.smartdevicelink.util.CorrelationIdGenerator;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SdlService extends Service implements IProxyListenerALM{
 
@@ -281,6 +285,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
 	@Override
 	public void onProxyClosed(String info, Exception e, SdlDisconnectedReason reason) {
+		Log.i(TAG, "Proxy was closed for reason:" + reason.toString());
 		stopSelf();
 	}
 
@@ -303,10 +308,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 			
 			// Other app setup (SubMenu, CreateChoiceSet, etc.) would go here
 		}else{
-			//We have HMI_NONE
-			if(notification.getFirstRun()){
-				uploadImages();
-			}
+			//We have HMI_NONE, avoid doing anything here
 		}
 		
 	}
@@ -409,6 +411,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onOnPermissionsChange(OnPermissionsChange notification) {
 		Log.i(TAG, "Permision changed: " + notification);
+
+		uploadImages(); // set the App Icon, etc. here
+
 		/* Uncomment to subscribe to vehicle data
 		List<PermissionItem> permissions = notification.getPermissionItem();
 		for(PermissionItem permission:permissions){
@@ -711,7 +716,27 @@ public class SdlService extends Service implements IProxyListenerALM{
 	public void onServiceDataACK(int dataSize) {
 
 	}
-	
+
+	@Override
+	public void onGetWayPointsResponse(GetWayPointsResponse response) {
+
+	}
+
+	@Override
+	public void onSubscribeWayPointsResponse(SubscribeWayPointsResponse response) {
+
+	}
+
+	@Override
+	public void onUnsubscribeWayPointsResponse(UnsubscribeWayPointsResponse response) {
+
+	}
+
+	@Override
+	public void onOnWayPointChange(OnWayPointChange notification) {
+
+	}
+
 	@Override
 	public void onOnDriverDistraction(OnDriverDistraction notification) {
 		// Some RPCs (depending on region) cannot be sent when driver distraction is active.
