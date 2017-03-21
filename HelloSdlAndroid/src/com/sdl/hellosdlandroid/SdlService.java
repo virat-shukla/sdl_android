@@ -113,8 +113,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
 	private boolean firstNonHmiNone = true;
 	private boolean isVehicleDataSubscribed = false;
-	
-	
+	private boolean isAppIconSet = false;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -308,9 +307,11 @@ public class SdlService extends Service implements IProxyListenerALM{
 			
 			// Other app setup (SubMenu, CreateChoiceSet, etc.) would go here
 		}else{
-			//We have HMI_NONE, avoid doing anything here
+			//We have HMI_NONE, try to avoid doing anything here
+			if(notification.getFirstRun()){
+				isAppIconSet = false;
+			}
 		}
-		
 	}
 	
 	/**
@@ -354,7 +355,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 			} catch (SdlException e) {
 				e.printStackTrace();
 			}
-		}else{
+		}else if(!isAppIconSet){
 			// If the file is already present, send the SetAppIcon request
 			try {
 				proxy.setappicon(ICON_FILENAME, CorrelationIdGenerator.generateId());
@@ -367,7 +368,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onPutFileResponse(PutFileResponse response) {
 		Log.i(TAG, "onPutFileResponse from SDL");
-		if(response.getCorrelationID() == iconCorrelationId){ //If we have successfully uploaded our icon, we want to set it
+		if(response.getCorrelationID() == iconCorrelationId && !isAppIconSet){ //If we have successfully uploaded our icon and it is not set, we want to set it
 			try {
 				proxy.setappicon(ICON_FILENAME, CorrelationIdGenerator.generateId());
 			} catch (SdlException e) {
@@ -590,7 +591,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onSetAppIconResponse(SetAppIconResponse response) {
         Log.i(TAG, "SetAppIcon response from SDL: " + response.getResultCode().name() + " Info: " + response.getInfo());
-
+		if(response.getSuccess()){
+			isAppIconSet = true;
+		}
 	}
 
 	@Override
